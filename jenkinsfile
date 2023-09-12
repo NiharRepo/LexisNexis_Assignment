@@ -1,27 +1,41 @@
 pipeline {
-    agent any  // Use any available agent/node
+   agent {
+       label 'slave'
+   }   
+    environment {
+       mavenHOME = '/usr/share/maven/bin:$PATH'
+   }
 
-    stages {
-        stage('Checkout') {
-            steps {
-               sh 'https://github.com/Chandandhani/nihar.git'
-            }
+   stages {
+      stage("SCM CHECKOUT") {
+         steps {
+            git credentialsId: 'Git-Creds', url: 'https://github.com/NiharRepo/LexisNexis_Assignment'
+         }
+      }
+   
+      stage("Maven Build") {
+         steps {
+            sh "mvn clean package"
+           } 
         }
-
-        stage('docker Build') {
-            steps {
-               sh 'docker build -t nginx:${BUILD_NUMBER}  .'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh 'docker run -itd --name nginx  nginx:${BUILD_NUMBER}'
-            }
-        }
-
-       
-    }
-
-    
+      stage("Build Docker Image"){
+         steps{
+             sh "docker build -t nrhub/spring-mongo ."
+      }
+   }
+      stage("Login to docker hub and push image"){
+         steps {
+            withCredentials([string(credentialsId: 'docker-creds', variable: 'DOCKER_PASS')]) {
+             sh "docker login -u nrhub -p ${DOCKER_PASS}"
+             sh "docker push nrhub/spring-mongo"
+            } 
+         } 
+         
+      }
+      stage('Deploying Application in K*S cluster'){
+          steps {
+              sh "kubectl create -f springBootMongo.yml"
+          } 
+       }   
+ } 
 }
