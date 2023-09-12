@@ -3,9 +3,9 @@
 **Assignment:1**
 
 Write a pipeline which will do the following steps:
-1- Pull the source code from got repo.
+1- Pull the source code from git repo.
 2- Build the code using maven tool.
-3- DO the code quality checkout using sonarqube.
+3- Do the code quality checkout using sonarqube.
 4- Build the image through docker and keep the image in docker repo.(preferable to use private artifactory repo like ECR,nexus)
 5- Deploy the image in kubernates pod.
 
