@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-               sh 'https://github.com/Chandandhani/nihar.git'
+               sh 'https://github.com/NiharRepo/LexisNexis_Assignment'
             }
         }
 
