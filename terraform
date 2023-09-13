@@ -1,1 +1,123 @@
+#Create VPC
 
+resource "aws_vpc" "cloudVPC" {
+  cidr_block       = "10.0.0.0/16"
+  instance_tenancy = "default"
+
+  tags = {
+    Name = "cloudVPC"
+  }
+}
+
+#Subnet public
+
+resource "aws_subnet" "public_subnet" {
+  vpc_id     = aws_vpc.cloudVPC.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "public_subnet"
+  }
+}
+
+#Subnet private
+
+resource "aws_subnet" "private_subnet" {
+  vpc_id     = aws_vpc.cloudVPC.id
+  cidr_block = "10.0.2.0/24"
+
+  tags = {
+    Name = "private_subnet"
+  }
+}
+
+# Create security group
+
+resource "aws_security_group" "cloudsg" {
+  name        = "cloudsg"
+  description = "Allow TLS inbound traffic"
+  vpc_id      = aws_vpc.cloudVPC.id
+
+  ingress {
+    description      = "TLS from VPC"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+   
+  }
+
+  tags = {
+    Name = "cloudsg"
+  }
+}
+
+# Create internet gateway
+
+resource "aws_internet_gateway" "cloudIGW" {
+  vpc_id = aws_vpc.cloudVPC.id
+
+  tags = {
+    Name = "cloudIGW"
+  }
+}
+
+#create Route table 
+
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.cloudVPC.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.cloudIGW.id
+  }
+
+  
+
+  tags = {
+    Name = "public_rt"
+  }
+}
+
+#Subnet association
+
+resource "aws_route_table_association" "apublic-so" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+
+# create key
+
+resource "aws_key_pair" "cloudkey" {
+  key_name   = "cloudkey-key"
+  public_key = "<key name>"
+}
+
+#Create Instance
+
+resource "aws_instance" "cloud-Instance" {
+  ami           = <provide AMI ID>
+  instance_type = "t2.micro"
+  subnet_id = aws_subnet.public_subnet.id
+  vpc_security_group_ids =[ aws_security_group.cloudsg.id]
+  key_name = "cloudkey"
+  tags = {
+    Name = "cloud-Instance"
+  }
+}
+
+# assign public IP
+
+resource "aws_eip" "cloud-ip" {
+  instance = aws_instance.cloud-Instance.id
+  domain   = "vpc"
+}
