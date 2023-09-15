@@ -19,7 +19,20 @@ pipeline {
                 sh 'docker run -itd --name nginx  nginx:${BUILD_NUMBER}'
             }
         }
-
+ stage("Login to docker hub and push image"){
+         steps {
+            withCredentials([string(credentialsId: 'docker-creds', variable: 'DOCKER_PASS')]) {
+             sh "docker login -u nrhub -p ${DOCKER_PASS}"
+             sh "docker push nrhub/nginx"
+            } 
+         } 
+         
+      }
+      stage('Deploying Application in K*S cluster'){
+          steps {
+              sh "kubectl create -f deployment.yml"
+          } 
+       }   
        
     }
 
